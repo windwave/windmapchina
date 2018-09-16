@@ -1,0 +1,108 @@
+{% extends "base_site.html" %}
+
+{% block title %} Logical view {% endblock title %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <style>
+    #logical_view { height:90vh; }
+  .link {
+    stroke: #ccc;
+  }
+  
+  .selection {
+    fill: #ADD8E6;
+    stroke: #ADD8E6;
+    fill-opacity: 0.3;
+    stroke-opacity: 0.7;
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+  }
+  
+  .node text {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    font: 10px sans-serif;
+  }
+
+  </style>
+{% endblock stylesheets %}
+
+{% block content %}
+  {% include 'gis_modals.html' %}
+  {% include 'scheduling_modal.html' %}
+  {% include 'device_modal.html' %}
+  {% include 'link_modal.html' %}
+  <ul id="contextMenu" class="dropdown-menu" role="menu">
+    <li><a tabindex="-1" href="#">Add new task</a></li>
+    <li><a tabindex="-1" href="#">Parameters</a></li>
+  </ul>
+  <div class="right_col" role="main">
+    <div class="row">
+      <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="x_panel">
+          <div class="x_content">
+            <div class="btn-group-vertical" style="z-index:500; position: absolute; top: 10px; right:30px;">
+              <div class="form-group">
+                <select id="select-filters" class="form-control">
+                  {% for pool in pools %}
+                    <option value={{ pool.id }}>{{ pool.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div align='center' id="logical_view"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ super()}}
+  <!-- Base -->
+  <script src="{{ url_for('static', filename='enms/commonFunctions.js') }}"></script>
+  <script src="{{ url_for('static', filename='enms/contextMenu.js') }}"></script>
+  <!-- D3.js -->
+  <script src="{{ url_for('views_blueprint.static', filename='d3/d3.v3.min.js') }}"></script>
+  <script>
+    var graph = {  
+      "nodes":[
+        {% for device in devices %}  
+          {  
+            "x": {{ device.id }},
+            "y": {{ device.id }},
+            "id": {{ name_to_id[device.name] }},
+            "real_id": {{ device.id }},
+            "name": "{{ device.name }}",
+            "img":  "{{ url_for('views_blueprint.static', filename='images/default/' + device.subtype + '.gif') }}",
+            "selected_img": "{{ url_for('views_blueprint.static', filename='images/selected/' + device.subtype + '.gif') }}"
+          },
+        {% endfor %}
+      ],
+      "links":[  
+        {% for link in links %}  
+          {
+            "real_id": {{ link.id }},
+            "name": "{{ link.name }}",
+            "source": {{ name_to_id[link.source_properties['name']] }},
+            "target": {{ name_to_id[link.destination_properties['name']] }}
+          },
+        {% endfor %}
+      ]
+    };
+  </script>
+  <script src="{{ url_for('tasks_blueprint.static', filename='scheduleTask.js') }}"></script>
+  <script>
+    var device_fields = {{ device_fields|tojson|safe }};
+    var link_fields = {{ link_fields|tojson|safe }};
+  </script>
+  <script src="{{ url_for('objects_blueprint.static', filename='objectCommonFunctions.js') }}"></script>
+  <script src="{{ url_for('views_blueprint.static', filename='views.js') }}"></script>
+  <script src="{{ url_for('views_blueprint.static', filename='logicalView.js') }}"></script>
+{% endblock javascripts %}
